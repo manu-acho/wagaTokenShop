@@ -1,66 +1,58 @@
-## Foundry
+# WagaToken & TokenShop Smart Contract Suite
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+## Overview
+This project consists of a **utility token (WagaToken)** and a **TokenShop smart contract** that enables users to purchase WagaTokens using ETH, based on the real-time ETH/USD price from Chainlink's oracle.
 
-Foundry consists of:
+## Contracts
+### 1️⃣ **WagaToken.sol**
+- An **ERC20 token** with `MINTER_ROLE` controlled minting.
+- Uses **OpenZeppelin’s AccessControl** to grant/revoke minter permissions.
+- Default admin can grant the **TokenShop contract** the `MINTER_ROLE`.
+- **Fixed 2 decimal places** for easy pricing calculations.
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+### 2️⃣ **TokenShop.sol**
+- Accepts **ETH** and mints **WagaTokens** for users.
+- Uses **Chainlink’s ETH/USD price feed** to determine exchange rates.
+- **Only the contract owner** can withdraw ETH from sales.
+- Integrated with **OracleLib** for stale price protection.
 
-## Documentation
+### 3️⃣ **OracleLib.sol**
+- Fetches **secure & fresh price data** from Chainlink.
+- Ensures **price feed is not stale** before use.
 
-https://book.getfoundry.sh/
-
-## Usage
-
-### Build
-
-```shell
-$ forge build
+## Deployment Steps
+### 1️⃣ Deploy WagaToken
+```sh
+forge create --rpc-url $RPC_URL --private-key $PRIVATE_KEY src/WagaToken.sol:WagaToken
+```
+### 2️⃣ Deploy TokenShop
+```sh
+forge create --rpc-url $RPC_URL --private-key $PRIVATE_KEY src/TokenShop.sol:TokenShop --constructor-args <WAGATOKEN_ADDRESS> <CHAINLINK_PRICE_FEED>
+```
+### 3️⃣ Grant `MINTER_ROLE` to TokenShop
+```sh
+cast send <WAGATOKEN_ADDRESS> "grantMinterRole(address)" <TOKENSHOP_ADDRESS> --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+```
+### 4️⃣ (Optional) Revoke `MINTER_ROLE` from deployer for security
+```sh
+cast send <WAGATOKEN_ADDRESS> "revokeRole(bytes32,address)" $(cast keccak "MINTER_ROLE") <DEPLOYER_ADDRESS> --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 ```
 
-### Test
-
-```shell
-$ forge test
+## Testing
+Run unit tests with Foundry:
+```sh
+forge test
 ```
 
-### Format
+## Future Enhancements
+- Add **burning function** for token buybacks.
+- Implement **referral rewards** in TokenShop.
+- Expand **multi-chain support** via cross-chain bridges.
 
-```shell
-$ forge fmt
-```
+## License
+This project is licensed under **MIT License**.
 
-### Gas Snapshots
+---
 
-```shell
-$ forge snapshot
-```
+🚀 **Built for seamless token sales with real-time price feeds!**
 
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
